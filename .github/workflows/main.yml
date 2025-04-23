@@ -1,0 +1,45 @@
+name: Deploy Chatbot to AWS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.6'
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Zip Lambda function
+        run: |
+          cd lambda
+          zip -r ../chatbot.zip .
+          cd ..
+
+      - name: Deploy with AWS CLI
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        run: |
+          aws cloudformation deploy \
+            --template-file chatbot_stack.yaml \
+            --stack-name chatbot-stack \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides OpenWeatherApiKey=${OPENWEATHER_API_KEY} \
+            --region ${AWS_REGION} \
+            --no-fail-on-empty-changeset
