@@ -1,0 +1,14 @@
+ChatbotFunction:
+  Type: AWS::Lambda::Function
+  Properties:
+    FunctionName: ChatbotFunction
+    Handler: chatbot_handler.lambda_handler
+    Runtime: python3.12.6
+    Code:
+      S3Bucket: !Ref LambdaCodeBucket
+      S3Key: chatbot.zip
+    Role: !GetAtt ChatbotLambdaRole.Arn
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref ChatbotTable
+        OPENWEATHER_API_KEY: !Ref OpenWeatherApiKey
